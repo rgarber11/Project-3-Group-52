@@ -2,49 +2,35 @@
 #include <string>
 #include <sstream>
 #include <iostream>
+#include <unordered_map>
 #include <vector>
 using namespace std;
 
-class Movie {
-private:
+struct Movie {
     string name;
     int movieID = 0;
     double rating = 0;
-public:
+    int popularity;
+    int year;
+    string imdb;
     vector<string> genres;
-    vector<string> tags;
+    unordered_map<int, double> tags;
     Movie() {}
-    Movie(int ID, string nm, string genresToSort) {
+    Movie(int ID, string nm, int _year, double _rating, int _popularity) {
         movieID = ID;
         name = nm;
-        istringstream str(genresToSort);
-        string tmp;
-        while (!getline(str, tmp, '|').eof()) {
-            genres.push_back(tmp);
-        }
-        genres.push_back(tmp); //Needs to occur twice due to nature of eof: does not enter loop for last genre, or if there's only 1.
+        year = _year;
+        rating = _rating;
+        popularity = _popularity;
     }
     Movie(const Movie& m1) { 
         movieID = m1.movieID;
         name = m1.name;
         rating = m1.rating;
         genres = m1.genres;
+        tags = m1.tags;
     }
-    void SetRating(double rated) { rating = rated; }
-    string GetName() { return name; }
-    int GetID() { return movieID; }
-    void Print() {
-        if (movieID != 0) {
-            cout << movieID << "|" << name << "|" << rating << "|";
-            for (unsigned int i = 0; i < genres.size(); i++) {
-                if (i == genres.size() - 1) {
-                    cout << genres[i];
-                }
-                else {
-                    cout << genres[i] << ", ";
-                }
-            }
-            cout << endl;
-        }
-    }
+    void addGenre(string genre) {genres.push_back(genre);}
+    void addTag(int tag, double weight) {tags.emplace(tag, weight);}
+    void addIMDB(string s) {imdb = s;};
 };
