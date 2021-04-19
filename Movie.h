@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <sstream>
 #include <iostream>
 #include <vector>
 using namespace std;
@@ -8,30 +9,42 @@ class Movie {
 private:
     string name;
     int movieID = 0;
-    int releaseYear = 0;
-    int rating = 0;
-    int popularity = 0;
-    vector<int> genres;
-
+    double rating = 0;
 public:
+    vector<string> genres;
+    vector<string> tags;
     Movie() {}
-    Movie(int ID, string nm, int release, int rate, int pop) {
+    Movie(int ID, string nm, string genresToSort) {
         movieID = ID;
         name = nm;
-        releaseYear = release;
-        rating = rate;
-        popularity = pop;
+        istringstream str(genresToSort);
+        string tmp;
+        while (!getline(str, tmp, '|').eof()) {
+            genres.push_back(tmp);
+        }
+        genres.push_back(tmp); //Needs to occur twice due to nature of eof: does not enter loop for last genre, or if there's only 1.
     }
     Movie(const Movie& m1) { 
         movieID = m1.movieID;
         name = m1.name;
-        releaseYear = m1.releaseYear;
         rating = m1.rating;
-        popularity = m1.popularity;
         genres = m1.genres;
     }
-    void SetGenres(vector<int> _genres) { genres = _genres; }
-    vector<int> GetGenres() { return genres; }
+    void SetRating(double rated) { rating = rated; }
     string GetName() { return name; }
     int GetID() { return movieID; }
+    void Print() {
+        if (movieID != 0) {
+            cout << movieID << "|" << name << "|" << rating << "|";
+            for (unsigned int i = 0; i < genres.size(); i++) {
+                if (i == genres.size() - 1) {
+                    cout << genres[i];
+                }
+                else {
+                    cout << genres[i] << ", ";
+                }
+            }
+            cout << endl;
+        }
+    }
 };
