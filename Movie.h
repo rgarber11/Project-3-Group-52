@@ -30,8 +30,8 @@ public:
         popularity = m1.popularity;
         genres = m1.genres;
     }
-    void SetGenres(vector<int> _genres);
-    vector<int> GetGenres();
+    void SetGenres(vector<int> _genres) { genres = _genres; }
+    vector<int> GetGenres() { return genres; }
     string GetName() { return name; }
     int GetID() { return movieID; }
 };
