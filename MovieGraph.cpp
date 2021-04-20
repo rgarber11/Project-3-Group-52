@@ -27,13 +27,9 @@ void MovieGraph::GetInfo() {
 		getline(istr, line);
 
 		while (getline(istr, line)) {
-		    istringstream i(line);
-		    string id;
-		    string name;
-            getline(i, id, ',');
-            getline(i, name, ',');
-            genreNames.emplace(stoi(id), name);
-            genreMap.emplace(name, vector<Movie*>{});
+		    std::regex_search(line, matches, regex("(\\d+),(.+)"));
+            genreNames.emplace(stoi(matches[1]), matches[2]);
+            genreMap.emplace(matches[2], vector<Movie*>{});
 		}
 	}
 	istr.close();
