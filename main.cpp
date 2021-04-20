@@ -182,15 +182,15 @@ public:
 
         queryResults.button_pressed.connect([this](const wstring& w) { //Picking a new movie from the list
             std::string s (w.begin(), w.end());
-            const Movie* movieSelected = movieData.GetMovie(s);
+            const Movie* movieSelected = movieData.GetMovie(s); //hash table ftw
             if(movieSelected) {
-                queryResults.disable();
+                queryResults.disable(); //Get rid of the list if someone chose one
                 queryResults | pipe::fixed_height(0);
-                info.enable();
+                info.enable(); //give us info
                 info | pipe::ignored_height();
                 info.content.named.clear();
                 movieName = movieSelected->name;
-                Glyph_string named = movieSelected->name + " (" + std::to_string(movieSelected->year) + ")";
+                Glyph_string named = movieSelected->name + " (" + std::to_string(movieSelected->year) + ")"; //Set up the info
                 info.content.named.append(named);
                 info.content.rated.clear();
                 Glyph_string ratingString = "Rated: " + std::to_string(movieSelected->rating) + "/5.0 stars.";
@@ -201,9 +201,9 @@ public:
                 Glyph_string instructions_text = "Information about: " + s;
                 instructions.clear();
                 instructions.append(instructions_text);
-                System::set_focus(*this);
+                System::set_focus(*this); //Keep the focus on us, since then escape will  work
                 int height = 0;
-                info.content.genres.interior.delete_all_children();
+                info.content.genres.interior.delete_all_children(); //Janky button list
                 for (string genre : movieSelected->genres) {
                     std::wstring genreString(genre.begin(), genre.end());
                     info.content.genres.add_button(genreString);
@@ -212,7 +212,9 @@ public:
                 info.content.genres | pipe::fixed_height(height);
             }
         });
-        info.content.recommender.pressed.connect([this]() {
+
+
+        info.content.recommender.pressed.connect([this]() { //Allows people to choose the amount of steps
             info.disable();
             info | pipe::fixed_height(0);
             recommender.enable();
@@ -220,11 +222,13 @@ public:
             instructions.clear();
             instructions.append(L"Enter the number (n > -1) of steps to take through the Graph:");
         });
-        recommender.recommender.edit_finished.connect([this](string s){
-            vector<Movie*> recommended = movieData.recommendationAlgorithm(movieName, stoi(s));
-            recommender.disable();
+
+
+        recommender.recommender.edit_finished.connect([this](string s){ //actually runs recommendation algorithm
+            vector<Movie*> recommended = movieData.recommendationAlgorithm(movieName, stoi(s)); //the meat
+            recommender.disable(); //turn of number_edit
             recommender | pipe::fixed_height(0);
-            queryResults.enable();
+            queryResults.enable(); //show the list
             queryResults | pipe::ignored_height();
             queryResults.interior.delete_all_children();
             for(const Movie* movie : recommended ){
@@ -236,16 +240,18 @@ public:
             instructions.append(instruct);
             System::set_focus(*this);
         });
+
+
         info.content.linker.pressed.connect([this]() {
-            string command = "xdg-open https:://www.imdb.com/title/tt" + movieData.GetMovie(movieName)->imdb;
-            system(command.c_str());
+            string command = "xdg-open https:://www.imdb.com/title/tt" + movieData.GetMovie(movieName)->imdb; //Linux system call to open imdb
+            system(command.c_str()); //xdg doesn't work on windows. We'd need preprocessor directives to go cross platform.
         });
     };
 };
 int main() {
 
     if(!std::filesystem::exists("../datasets/moviesWithRatings.csv")) { //If the files have been parsed, there is no need to parse them.
-        filecreator();
+        filecreator(); //Pre-parser
     }
     return ox::System{}.run<App>(); //Start up the TUI
 

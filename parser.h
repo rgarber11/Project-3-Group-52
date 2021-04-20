@@ -11,8 +11,8 @@
 using mpfr::mpreal;
 void filecreator() {
     std::ifstream movies;
-    std::ofstream MOVIES ("../datasets/moviesNoRatings.csv");
-    std::ofstream genre("../datasets/genres.csv");
+    std::ofstream MOVIES ("../datasets/moviesNoRatings.csv"); //first we load some of the movie info
+    std::ofstream genre("../datasets/genres.csv"); //plus a table converting genre
     MOVIES << "id,title,year\n";
     std::unordered_map<std::string,int> genres;
     genres.emplace(std::make_pair("Action", 0));
@@ -35,15 +35,16 @@ void filecreator() {
     genres.emplace(std::make_pair("Western", 17));
     genre << "id,genre\n";
     for(auto i : genres) {
-        genre << i.second << "," << i.first << "\n";
+        genre << i.second << "," << i.first << "\n"; //order doesn't matter
     }
     genre.close();
-    movies.open("../ml-25m/movies.csv");
+
+    movies.open("../ml-25m/movies.csv"); //Open first movie csv
     std::string input;
     getline(movies, input);
     std::smatch matches;
     std::regex movieRegex("(\\d+),(.+) \\((\\d{4})\\),(.+)");
-    std::ofstream movie_genres("../datasets/movie_genres.csv");
+    std::ofstream movie_genres("../datasets/movie_genres.csv"); //store here
     movie_genres << "movie,genre\n";
     while(getline(movies, input)) {
         std::regex_search(input, matches, movieRegex);
@@ -60,10 +61,12 @@ void filecreator() {
         }
     }
     movies.close();
+
     movie_genres.close();
     MOVIES.close();
-    std::ifstream ratings("../ml-25m/ratings.csv");
-    std::unordered_map<int,std::vector<mpreal>> ratingAvg;
+
+    std::ifstream ratings("../ml-25m/ratings.csv"); //O(R) R>>>>>m
+    std::unordered_map<int,std::vector<mpreal>> ratingAvg; //find average rating
     std::regex ratingRegex("\\d+,(\\d+),(.+),.+");
     std::string line;
     getline(ratings, line);
@@ -83,7 +86,8 @@ void filecreator() {
         }
     }
     ratings.close();
-    std::ifstream movieOG("../datasets/moviesNoRatings.csv");
+
+    std::ifstream movieOG("../datasets/moviesNoRatings.csv"); //store what we found last time
     std::ofstream movieNew("../datasets/moviesWithRatings.csv");
     getline(movieOG,line);
     movieNew << "id,title,year,rating,popularity\n";
@@ -105,7 +109,8 @@ void filecreator() {
     }
     movieNew.close();
     movieOG.close();
-    std::ifstream tags("../ml-25m/tags.csv");
+
+    std::ifstream tags("../ml-25m/tags.csv"); //first create a map for tags
     std::ifstream hash("../ml-25m/genome-tags.csv");
     std::unordered_map<int, std::unordered_set<int>> tagdb;
     std::unordered_map<std::string, int> tagToID;
@@ -116,9 +121,10 @@ void filecreator() {
         tagToID.emplace(std::make_pair(matches[2], stoi(matches[1])));
     }
     hash.close();
-    std::regex tagsCSV ("\\d+,(\\d+),(.+),.+");
+
+    std::regex tagsCSV("\\d+,(\\d+),(.+),.+");
     getline(tags, line);
-    while(getline(tags,line)) {
+    while(getline(tags,line)) { //get the tags, but we don't need the user info
         std::regex_search(line, matches, tagsCSV);
         int tagid = tagToID[matches[2]];
         auto iter = tagdb.find(stoi(matches[1]));
@@ -131,9 +137,10 @@ void filecreator() {
         }
     }
     tags.close();
+
     std::ifstream scores("../ml-25m/genome-scores.csv");
     std::regex scorer ("(\\d+),(\\d+),(.+)");
-    std::ofstream tagscores("../datasets/tagscores.csv");
+    std::ofstream tagscores("../datasets/tagscores.csv"); //store tag weights, allow for recommended
     getline(scores,line);
     tagscores << "movieid,tagid,score\n";
     auto iter = tagdb.begin();
@@ -148,6 +155,7 @@ void filecreator() {
     }
     scores.close();
     tagscores.close();
-    std::filesystem::copy("../ml-25m/genome-tags.csv", "../datasets/genome-tags.csv");
+
+    std::filesystem::copy("../ml-25m/genome-tags.csv", "../datasets/genome-tags.csv"); //these files don't need parsing
     std::filesystem::copy("../ml-25m/links.csv", "../datasets/links.csv");
 };
