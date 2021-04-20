@@ -22,64 +22,61 @@ public:
 	void GetInfo(); //Parses data, fills unordered maps.
 	const Movie* GetMovie(string name) {
 		auto iter = movieMap.find(name);
-		return (iter == movieMap.end()) ? nullptr : iter->second;
+		return (iter == movieMap.end()) ? nullptr : iter->second; //Simple to see if the movie exists.
 	}
-	const vector<Movie*> getGenreMovies(string genre) {
+	const vector<Movie*> getGenreMovies(string genre) { //returns all movies in one genre
 	    vector<Movie*> genreVector = genreMap[genre];
-	    std::sort(genreVector.begin(), genreVector.end(), [](Movie* lhs, Movie* rhs) {
-	        double lAdjRating = lhs->popularity > 1500 ? 1 : .75;
-	        double rAdjRating = rhs->popularity > 1500 ? 1 : .75;
-	        lAdjRating*=lhs->rating;
-	        rAdjRating*=rhs->rating;
-	        return lAdjRating>rAdjRating;
-	    });
+
         return genreVector;
 
 	}
+
+
 	vector<Movie*>  recommendationAlgorithm(string name, int steps) {
 	    if(steps == 0) {
-	        return vector<Movie*>{movieMap[name]};
+	        return vector<Movie*>{movieMap[name]}; //No steps no go
 	    } else {
-	        Movie* og = movieMap[name];
-	        unordered_set<string> traversed;
+	        Movie* og = movieMap[name]; //Start with the source
+	        unordered_set<string> traversed; //Where have we been
 	        traversed.insert(name);
-            unordered_map<string, double> rater;
-            vector<Movie*> recommended;
-            for(auto iter : og->tags) {
-                vector<Movie*> tagged = tagMap[iter.first];
-                for(Movie* similar : tagged) {
-                    if(traversed.find(similar->name) == traversed.end()) {
-                        double addition = similar->popularity > 1500 ? 1 : .9;
-                        addition *= (.5) / (abs(similar->tags[iter.first] - iter.second) + .1);
-                        auto raterIter = rater.find(similar->name);
-                        if (raterIter != rater.end()) {
+            unordered_map<string, double> rater; //How close is everybody
+            vector<Movie*> recommended; //All the movies
+            for(auto iter : og->tags) { //Do this for all tags
+                vector<Movie*> tagged = tagMap[iter.first]; //find all the tagged movies
+                for(Movie* similar : tagged) { //Go through them
+                    if(traversed.find(similar->name) == traversed.end()) { //if we've used them for traversing, we don't need them
+                        double addition = similar->popularity > 1500 ? 1 : .9; //Super unpopular movies are rated lower
+                        addition *= (.5) / (abs(similar->tags[iter.first] - iter.second) + .1); //algorithm where similar weights in tags are proritized.
+                        auto raterIter = rater.find(similar->name); //Have we dealt with this movie befor?
+                        if (raterIter != rater.end()) { //If we have, then we don't need to re add it to the vector
                             raterIter->second += addition;
                         } else {
-                            addition *= similar->rating;
+                            addition *= similar->rating; //If we haven't seen it, we need it's rating
                             recommended.push_back(similar);
                             rater.emplace(similar->name, addition);
                         }
                     }
                 }
             }
-            std::sort(recommended.begin(), recommended.end(), [&](const Movie* lhs, const Movie* rhs){
+            std::sort(recommended.begin(), recommended.end(), [&](const Movie* lhs, const Movie* rhs){ //lambda comparator with unordered map
                 double lrater = rater[lhs->name];
                 double rrater = rater[rhs->name];
                 return lrater > rrater;
             });
+
             for(int i = 1; i < steps; i++) {
-                og = recommended[i-1];
+                og = recommended[i-1]; //take then next lowest number
                 int offset = 1;
-                while(traversed.find(og->name) != traversed.end()) {
+                while(traversed.find(og->name) != traversed.end()) { //make sure we haven't somehow been there
                     og = recommended[i-1+offset];
                     offset++;
                 }
-                traversed.insert(og->name);
+                traversed.insert(og->name); //Do the last thing all over again
                 for(auto iter : og->tags) {
                     vector<Movie*> tagged = tagMap[iter.first];
                     for(Movie* similar : tagged) {
                         if (traversed.find(similar->name) == traversed.end()) {
-                            double addition = similar->popularity > 1500 ? 1.0 / (i + 1) : .9 / (i + 1);
+                            double addition = similar->popularity > 1500 ? 1.0 / (i + 1) : .9 / (i + 1); //Since we're further away these are worth less. Quasi Zipf's law
                             addition *= (.5) / (abs(similar->tags[iter.first] - iter.second) + .1);
                             addition *= similar->rating;
                             auto raterIter = rater.find(similar->name);
@@ -92,7 +89,7 @@ public:
                         }
                     }
                 }
-                std::sort(recommended.begin(), recommended.end(), [&](const Movie* lhs, const Movie* rhs){
+                std::sort(recommended.begin(), recommended.end(), [&](const Movie* lhs, const Movie* rhs){ //Resort for next time
                     double lrater = rater[lhs->name];
                     double rrater = rater[rhs->name];
                     return lrater > rrater;
