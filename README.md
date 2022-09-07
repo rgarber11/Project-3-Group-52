@@ -1,4 +1,4 @@
-#Project-3-Group-52
+# Project-3-Group-52
 This repository includes all of the source code for the Project 3 implementation. 
 Main.cpp is the main file where the implementation for the UI is used, and the supporting files contain the Movie data class, Graph data structure, and unordered map data structures.
 
